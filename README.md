@@ -11,6 +11,7 @@
    mkdir my-feature
    touch my-feature/README.md  # or add your actual files here
    ```
+   Git tracks files, not empty directories, so every folder you commit needs at least one file inside.
 3. Stage and commit the new folder (with its files):
    ```bash
    git add my-feature
