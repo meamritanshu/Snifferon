@@ -15,7 +15,7 @@
 3. Stage and commit the new folder (with its files):
    ```bash
    git add my-feature
-   git commit -m "Add my-feature folder"
+   git commit -m "Add my-feature folder"  # replace with your folder name in the message
    git push origin main
    ```
 
