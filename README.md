@@ -20,5 +20,5 @@
 
 Alternatively, from the GitHub web UI:
 1. Go to the repository’s **main** branch.
-2. Click **Add file** ➜ **Create new file**, type `<folder-name>/README.md` (or another file name) to create the folder.
+2. Click **Add file**, then **Create new file**, and type `<folder-name>/README.md` (or another file name) to create the folder.
 3. Add any starter content, then commit the change to `main`.
