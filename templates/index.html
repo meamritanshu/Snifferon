@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura: Advanced Network Visualization Suite</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.2/socket.io.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div id="controls" class="card">
+            <h1>Aura: Advanced Network Visualization Suite</h1>
+            <p>Click a protocol to filter. Use mouse wheel to zoom/pan.</p>
+            <div id="legend"></div>
+            <div id="ui-controls">
+                <button id="zoom-in-btn" class="control-btn">Zoom In</button>
+                <button id="zoom-out-btn" class="control-btn">Zoom Out</button>
+                <button id="zoom-reset-btn" class="control-btn">Reset Zoom</button>
+                <button id="pause-resume-btn" class="control-btn">Pause</button>
+                <button id="export-svg-btn" class="control-btn">Export as SVG</button>
+            </div>
+        </div>
+        
+        <div id="network-graph-container" class="card">
+            <svg id="network-graph"></svg>
+        </div>
+
+        <div id="temporal-container" class="card">
+            <h2 data-tooltip="This section shows real-time network activity levels and trends over time.">Temporal Insights</h2>
+            <div class="temporal-insights">
+                <div data-tooltip="The number of network packets being processed by your machine every minute. Higher numbers mean more activity.">
+                    <div id="current-rate" class="insight-metric">0</div>
+                    <div class="insight-label">Packets / Min</div>
+                </div>
+                <div data-tooltip="Indicates whether network traffic is currently increasing, decreasing, or stable compared to the last few seconds.">
+                    <div id="traffic-trend" class="insight-trend">&harr;</div>
+                    <div class="insight-label">Trend</div>
+                </div>
+                <div data-tooltip="The average number of packets per minute over the last 30 minutes. This is your 'normal' traffic level.">
+                    <div id="baseline-rate" class="insight-metric">0</div>
+                    <div class="insight-label">Baseline / Min</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="patterns-container" class="card">
+            <h2 data-tooltip="The AI model groups network connections into behavioral patterns like 'Web Browsing' or 'Streaming' to show what your network is being used for.">Traffic Patterns</h2>
+            <p id="pattern-status">Waiting for packet data...</p>
+            <div id="pattern-breakdown" class="pattern-breakdown">
+                <!-- This div will be populated with results after training -->
+            </div>
+        </div>
+
+        <div id="classification-container" class="card">
+            <h2 data-tooltip="A breakdown of traffic types based on rules. For example, traffic to port 443 is classified as 'Web Browsing'.">Classification Summary</h2>
+            <div id="classification-breakdown" class="classification-breakdown">
+                <p>Waiting for classification data...</p>
+            </div>
+        </div>
+        
+        <div id="log-container" class="card">
+            <h2 data-tooltip="A real-time log of every individual network packet being captured and analyzed.">Packet Log</h2>
+            <div class="log-window">
+                <table id="log-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>Protocol</th>
+                            <th>Pattern</th>
+                            <th>Class</th>
+                            <th>Conf.</th>
+                            <th>Ports</th>
+                            <th>Payload</th>
+                            <th>Anomaly</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="anomaly-log-container" class="card">
+            <h2 data-tooltip="A special log that only shows packets the AI has flagged as unusual or potentially suspicious.">Anomalies Detected</h2>
+            <div class="log-window">
+                <table id="anomaly-log-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>Protocol</th>
+                            <th>Ports</th>
+                            <th>Payload</th>
+                        </tr>
+                    </thead>
+                    <tbody id="anomaly-log-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="tooltip"></div>
+    <button id="clear-btn" title="Clear everything from the graph and log">Clear All</button>
+    <footer class="footer">
+        <div class="footer-inner">
+            <h2 class="footer-title">Founders</h2>
+            <p class="footer-sub">This project is proudly developed by students of Amity University, Noida.</p>
+
+            <div class="founders-grid">
+                <div class="founder">
+                    <div class="avatar">👤</div>
+                    <strong class="founder-name">Amritanshu Bhaskaram</strong>
+                    <div class="founder-contact">📞 <a href="tel:+917282889030">+91 72828 89030</a></div>
+                    <div class="founder-contact">✉️ <a href="mailto:i.amritanshu1001@gmail.com">i.amritanshu1001@gmail.com</a></div>
+                    <div class="founder-links">🔗 <a href="https://www.linkedin.com/in/amritanshu-bhaskaram-840952257/" target="_blank" rel="noopener noreferrer">LinkedIn</a></div>
+                </div>
+
+                <div class="founder">
+                    <div class="avatar">👤</div>
+                    <strong class="founder-name">Antony Achu Sabu</strong>
+                    <div class="founder-contact">📞 <a href="tel:+919489143262">+91 94891 43262</a></div>
+                    <div class="founder-contact">✉️ <a href="mailto:antonysabu2004@gmail.com">antonysabu2004@gmail.com</a></div>
+                    <div class="founder-links">🔗 <a href="https://www.linkedin.com/in/antony-achu-058501201/" target="_blank" rel="noopener noreferrer">LinkedIn</a></div>
+                </div>
+
+                <div class="founder">
+                    <div class="avatar">👤</div>
+                    <strong class="founder-name">Mudit Manglik</strong>
+                    <div class="founder-contact">📞 <a href="tel:+919873093236">+91 98730 93236</a></div>
+                    <div class="founder-contact">✉️ <a href="mailto:muditmanglik72@gmail.com">muditmanglik72@gmail.com</a></div>
+                    <div class="founder-links">🔗 <a href="https://in.linkedin.com/in/mudit-manglik-811416290" target="_blank" rel="noopener noreferrer">LinkedIn</a></div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- Layout & Data State (restored) ---
+        const graphContainer = document.getElementById('network-graph-container') || { clientWidth: window.innerWidth, clientHeight: window.innerHeight };
+        const WIDTH = graphContainer.clientWidth || window.innerWidth;
+        const HEIGHT = graphContainer.clientHeight || window.innerHeight;
+
+        // --- Data State ---
+        let nodes = [];
+        let links = [];
+        let ipToDomainMap = {};
+        let homeIp = null;
+        let activeFilter = 'all';
+        let isPaused = false;
+        const nodeMap = new Map();
+        const linkMap = new Map();
+        let classificationData = {};
+        const MAX_LOG_ENTRIES = 200;
+        const MAX_ANOMALY_LOG_ENTRIES = 50;
+
+        // --- D3 Setup ---
+        const svg = d3.select("#network-graph").attr("viewBox", `0 0 ${WIDTH} ${HEIGHT}`);
+        const container = svg.append("g");
+        const tooltip = d3.select("#tooltip");
+
+        const simulation = d3.forceSimulation()
+            .force("link", d3.forceLink().id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-80)) // reduced repulsion strength
+            .force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2))
+            .on("tick", ticked);
+
+        const colorScale = d3.scaleOrdinal()
+            .domain(["HTTPS", "HTTP", "DNS", "TCP", "UDP", "ICMP", "Unknown"])
+            .range(["#22C55E", "#F59E0B", "#3B82F6", "#EF4444", "#8B5CF6", "#6B7280", "#9CA3AF"]);
+
+        const classColorScale = d3.scaleOrdinal()
+            .domain(["Normal", "Web Browsing", "Streaming", "DNS Query/Response", "Port Scan", "File Transfer", "Background Service", "Unknown"])
+            .range(["#22C55E", "#3B82F6", "#F59E0B", "#8B5CF6", "#EF4444", "#6B7280", "#9CA3AF", "#4a4a4a"]);
+        
+        let linkGroup = container.append("g").attr("class", "links");
+        let nodeGroup = container.append("g").attr("class", "nodes");
+
+        // --- Zoom --- 
+        const zoom = d3.zoom().scaleExtent([0.1, 8]).on("zoom", (event) => {
+            container.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+
+        // --- Visualization Update Function ---
+        function update() {
+            let displayedLinks = links;
+            let displayedNodes = nodes;
+
+            if (activeFilter !== 'all') {
+                displayedLinks = links.filter(l => l.protocol === activeFilter);
+                const activeNodeIds = new Set();
+                displayedLinks.forEach(l => { activeNodeIds.add(l.source.id); activeNodeIds.add(l.target.id); });
+                displayedNodes = nodes.filter(n => activeNodeIds.has(n.id));
+            }
+
+            let node = nodeGroup.selectAll("g.node").data(displayedNodes, d => d.id);
+            node.exit().remove();
+            const nodeEnter = node.enter().append("g").attr("class", "node").call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+            
+            nodeEnter.append("circle")
+                .attr("r", d => d.id === homeIp ? 12 : 8)
+                .attr("fill", d => d.id === homeIp ? 'var(--accent-green)' : 'var(--accent-blue)');
+
+            nodeEnter.append("text").attr("x", 15).attr("y", "0.31em").text(d => ipToDomainMap[d.id] || d.id);
+            node = nodeEnter.merge(node);
+            node.select("text").text(d => ipToDomainMap[d.id] || d.id);
+
+            node.on("mouseover", (event, d) => {
+                tooltip.transition().duration(200).style("opacity", 1);
+                let content = `<div style="font-weight: 700;">${d.id === homeIp ? 'Your PC' : 'IP'}: ${d.id}</div>`;
+                if (ipToDomainMap[d.id]) content += `<div>Domain: ${ipToDomainMap[d.id]}</div>`;
+                tooltip.html(content).style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 28) + "px");
+                d3.select(event.currentTarget).select("circle").attr("r", d => d.id === homeIp ? 16 : 12);
+            }).on("mouseout", (event, d) => {
+                tooltip.transition().duration(500).style("opacity", 0);
+                d3.select(event.currentTarget).select("circle").attr("r", d => d.id === homeIp ? 12 : 8);
+            });
+
+            let link = linkGroup.selectAll("line").data(displayedLinks, d => d.id);
+            link.exit().remove();
+            link = link.enter().append("line").attr("class", "link").merge(link);
+            link.attr("stroke", d => colorScale(d.protocol)).attr("stroke-width", 2.5);
+
+            simulation.nodes(displayedNodes).force("link").links(displayedLinks);
+            simulation.alpha(0.3).restart();
+        }
+
+        function ticked() {
+            linkGroup.selectAll("line").attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+            nodeGroup.selectAll("g.node").attr("transform", d => `translate(${d.x},${d.y})`);
+        }
+
+        function dragstarted(event, d) { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+        function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+        function dragended(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+
+        function setupFilters() {
+            const legendDiv = d3.select("#legend");
+            const showAllBtn = legendDiv.append("button").attr("class", "legend-btn active").text("Show All").on("click", () => {
+                activeFilter = 'all';
+                d3.selectAll(".legend-btn").classed("active", false);
+                showAllBtn.classed("active", true);
+                update();
+            });
+            colorScale.domain().forEach(p => {
+                const legendBtn = legendDiv.append("button").attr("class", "legend-btn").on("click", () => {
+                    activeFilter = p;
+                    d3.selectAll(".legend-btn").classed("active", false);
+                    legendBtn.classed("active", true);
+                    update();
+                });
+                legendBtn.html(`<div style="width: 12px; height: 12px; background-color: ${colorScale(p)}; border-radius: 50%; margin-right: 8px;"></div><span>${p}</span>`);
+            });
+        }
+
+        function addPacketToLog(data) {
+            const logBody = document.getElementById('log-body');
+            const row = document.createElement('tr');
+            const ports = (data.sport && data.dport) ? `${data.sport} &rarr; ${data.dport}` : 'N/A';
+            const anomalyCell = data.is_anomaly ? `<td style="color: var(--accent-red); font-weight: bold;">Yes</td>` : `<td>No</td>`;
+            const confidenceBar = `<div class="class-bar-container"><div class="class-bar" style="width: ${data.class_confidence}%; background-color: ${classColorScale(data.traffic_class)};"></div></div>`;
+            row.innerHTML = `<td>${data.timestamp}</td><td>${data.source}</td><td>${data.target}</td><td>${data.protocol}</td><td>${data.traffic_pattern || 'N/A'}</td><td>${data.traffic_class || 'N/A'}</td><td>${confidenceBar}</td><td>${ports}</td><td>${data.payload_size} B</td>${anomalyCell}`;
+            logBody.insertBefore(row, logBody.firstChild);
+            if (logBody.children.length > MAX_LOG_ENTRIES) logBody.removeChild(logBody.lastChild);
+        }
+
+        function addAnomalyToLog(data) {
+            const anomalyLogBody = document.getElementById('anomaly-log-body');
+            const row = document.createElement('tr');
+            const ports = (data.sport && data.dport) ? `${data.sport} &rarr; ${data.dport}` : 'N/A';
+            row.innerHTML = `<td>${data.timestamp}</td><td>${data.source}</td><td>${data.target}</td><td>${data.protocol}</td><td>${ports}</td><td>${data.payload_size} B</td>`;
+            anomalyLogBody.insertBefore(row, anomalyLogBody.firstChild);
+            if (anomalyLogBody.children.length > MAX_ANOMALY_LOG_ENTRIES) anomalyLogBody.removeChild(anomalyLogBody.lastChild);
+        }
+
+        function updateClassificationSummary() {
+            const breakdownDiv = d3.select("#classification-breakdown");
+            breakdownDiv.html(""); // Clear previous content
+
+            // No data
+            if (!classificationData || Object.keys(classificationData).length === 0) {
+                breakdownDiv.append("p").text("No classification data yet.");
+                return;
+            }
+
+            // Normalize entries to objects: { count, count_pct, bytes, bytes_pct }
+            const entries = Object.entries(classificationData).map(([key, val]) => {
+                if (typeof val === 'number') {
+                    return [key, { count: val, count_pct: null, bytes: 0, bytes_pct: null }];
+                }
+                // Already structured
+                return [key, Object.assign({ count: 0, count_pct: null, bytes: 0, bytes_pct: null }, val)];
+            });
+
+            // If count_pct is missing, compute from counts
+            const totalCount = entries.reduce((s, [, v]) => s + (v.count || 0), 0);
+            entries.forEach(([, v]) => {
+                if (v.count_pct === null) {
+                    v.count_pct = totalCount > 0 ? (v.count / totalCount) * 100 : 0;
+                }
+            });
+
+            // Sort by percentage
+            entries.sort((a, b) => b[1].count_pct - a[1].count_pct);
+
+            entries.forEach(([key, value]) => {
+                const percentage = isFinite(value.count_pct) ? value.count_pct : 0;
+                const item = breakdownDiv.append("div").attr("class", "class-item");
+                item.append("span").text(key);
+
+                // Right side: percentage text
+                item.append("span").attr("class", "class-confidence").html(`${percentage.toFixed(1)}%`);
+
+                // Bar
+                const barContainer = item.append("div").attr("class", "class-bar-container");
+                barContainer.append("div").attr("class", "class-bar").style("width", `${Math.max(0, Math.min(100, percentage))}%`).style("background-color", classColorScale(key));
+
+                // Small details line
+                const details = ` ${value.count || 0} packets` + (value.bytes ? ` • ${Math.round(value.bytes / 1024)} KB` : "");
+                item.append("div").attr("style", "font-size:0.8em;color:var(--text-secondary);margin-top:6px;").text(details);
+            });
+        }
+
+        function setupUIControls() {
+            d3.select("#zoom-in-btn").on("click", () => svg.transition().call(zoom.scaleBy, 1.2));
+            d3.select("#zoom-out-btn").on("click", () => svg.transition().call(zoom.scaleBy, 0.8));
+            d3.select("#zoom-reset-btn").on("click", () => svg.transition().call(zoom.transform, d3.zoomIdentity));
+
+            const pauseBtn = d3.select("#pause-resume-btn");
+            pauseBtn.on("click", () => { isPaused = !isPaused; pauseBtn.text(isPaused ? "Resume" : "Pause"); });
+
+            d3.select("#export-svg-btn").on("click", () => {
+                const svgEl = document.getElementById('network-graph');
+                const svgString = new XMLSerializer().serializeToString(svgEl);
+                const blob = new Blob([svgString], {type: "image/svg+xml"});
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "network_graph.svg";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        }
+
+        function setupInfoTooltips() {
+            const infoTooltip = d3.select("#tooltip");
+            d3.selectAll('[data-tooltip]').on('mouseover', function(event) {
+                infoTooltip.transition().duration(200).style("opacity", 1);
+                infoTooltip.html(d3.select(this).attr('data-tooltip'))
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            }).on('mousemove', function(event) {
+                infoTooltip.style("left", (event.pageX + 15) + "px")
+                           .style("top", (event.pageY - 28) + "px");
+            }).on('mouseout', function() {
+                infoTooltip.transition().duration(500).style("opacity", 0);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupFilters();
+            setupUIControls();
+            setupInfoTooltips(); // Initialize the new tooltips
+            const socket = io();
+
+            socket.on('connect', () => console.log("Socket.IO connected!"));
+            socket.on('connect_error', (err) => console.error("Socket.IO connection failed:", err));
+
+            socket.on('init', function(data) {
+                homeIp = data.ip;
+                if (homeIp && !nodeMap.has(homeIp)) { const homeNode = { id: homeIp }; nodeMap.set(homeIp, homeNode); nodes.push(homeNode); update(); }
+            });
+
+            socket.on('buffer_update', function(data) {
+                const statusP = document.getElementById('pattern-status');
+                if (statusP) {
+                    statusP.textContent = `Collecting packets for model training: ${data.count} / ${data.total}`;
+                }
+            });
+
+            socket.on('status_update', function(data) {
+                const statusP = document.getElementById('pattern-status');
+                if (statusP) {
+                    statusP.textContent = data.message;
+                }
+            });
+
+            socket.on('clustering_update', function(data) {
+                const breakdownDiv = d3.select("#pattern-breakdown");
+                const statusP = document.getElementById('pattern-status');
+                if (statusP) statusP.style.display = 'none'; // Hide status message
+                breakdownDiv.html(""); // Clear previous content
+
+                const sortedPatterns = Object.entries(data).sort((a, b) => b[1].percentage - a[1].percentage);
+                
+                sortedPatterns.forEach(([key, value]) => {
+                    const item = breakdownDiv.append("div").attr("class", "pattern-item"); // New class for styling
+                    item.append("h3").text(`${key} (${value.percentage}%)`);
+                    item.append("p").attr("class", "pattern-desc").text(value.description);
+                    item.append("div").attr("class", "pattern-metric").html(`Avg. Rate: <strong>${(value.avg_byte_rate / 1024).toFixed(2)} KB/s</strong>`);
+                });
+            });
+
+            socket.on('classification_update', function(data) {
+                classificationData = data;
+                updateClassificationSummary();
+            });
+
+            socket.on('time_series_update', function(data) {
+                document.getElementById('current-rate').textContent = data.current_rate;
+                document.getElementById('baseline-rate').textContent = data.baseline_rate;
+                const trendArrow = document.getElementById('traffic-trend');
+                if (data.trend === 'increasing') { trendArrow.innerHTML = '&uarr;'; trendArrow.className = 'insight-trend trend-increasing'; }
+                else if (data.trend === 'decreasing') { trendArrow.innerHTML = '&darr;'; trendArrow.className = 'insight-trend trend-decreasing'; }
+                else { trendArrow.innerHTML = '&harr;'; trendArrow.className = 'insight-trend trend-stable'; }
+            });
+
+            let packetCounter = 0;
+            socket.on('network_data', function(data) {
+                if (isPaused) return;
+                addPacketToLog(data);
+
+                // The summary is now handled by the 'classification_update' event
+                // No need to update classificationData here anymore
+
+                if (data.is_anomaly) {
+                    addAnomalyToLog(data);
+                    console.warn("Anomaly Detected:", data);
+                    const anomalyNodes = nodeGroup.selectAll("g.node").filter(d => d.id === data.source || d.id === data.target);
+                    anomalyNodes.select("circle").attr("class", "anomaly-flash").transition().delay(1000).attr("class", "");
+                }
+
+                let needsUpdate = false;
+                if (data.domain) { ipToDomainMap[data.source] = data.domain; ipToDomainMap[data.target] = data.domain; }
+                if (!nodeMap.has(data.source)) { nodeMap.set(data.source, { id: data.source }); nodes.push(nodeMap.get(data.source)); needsUpdate = true; }
+                if (!nodeMap.has(data.target)) { nodeMap.set(data.target, { id: data.target }); nodes.push(nodeMap.get(data.target)); needsUpdate = true; }
+                const linkId = `${data.source}-${data.target}-${data.protocol}`;
+                const reverseLinkId = `${data.target}-${data.source}-${data.protocol}`;
+                if (!linkMap.has(linkId) && !linkMap.has(reverseLinkId)) { const newLink = { id: linkId, source: nodeMap.get(data.source), target: nodeMap.get(data.target), protocol: data.protocol }; linkMap.set(linkId, newLink); links.push(newLink); needsUpdate = true; }
+                if(needsUpdate) update();
+            });
+
+            document.getElementById('clear-btn').addEventListener('click', () => {
+                nodes.length = 0; links.length = 0; nodeMap.clear(); linkMap.clear(); ipToDomainMap = {};
+                document.getElementById('log-body').innerHTML = '';
+                document.getElementById('anomaly-log-body').innerHTML = '';
+                classificationData = {}; updateClassificationSummary();
+                if (homeIp) { const homeNode = { id: homeIp }; nodeMap.set(homeIp, homeNode); nodes.push(homeNode); }
+                update();
+                console.log("Graph and logs cleared by user.");
+            });
+        });
+    </script>
+</body>
+</html>
