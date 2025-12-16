@@ -6,11 +6,12 @@
    ```bash
    git checkout main
    ```
-2. Create the folder and add any files you need:
+2. Create the folder **and add at least one file** so Git can track it:
    ```bash
    mkdir <folder-name>
+   touch <folder-name>/README.md  # or add your actual files here
    ```
-3. Stage and commit the new folder:
+3. Stage and commit the new folder (with its files):
    ```bash
    git add <folder-name>
    git commit -m "Add <folder-name> folder"
