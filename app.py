@@ -1,5 +1,6 @@
 # app.py
 import sys
+import html
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 from scapy.all import sniff, IP, TCP, UDP, ICMP, DNS, get_if_addr
@@ -21,7 +22,7 @@ app = Flask(__name__)
 # Disable caching for development
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
+socketio = SocketIO(app, async_mode='threading', cors_allowed_origins=["http://localhost:5001", "http://127.0.0.1:5001"])
 
 # --- Configuration ---
 def get_active_interface():
@@ -292,8 +293,8 @@ def packet_callback(packet):
             sport, dport, payload_size, protocol = packet[UDP].sport, packet[UDP].dport, len(packet[UDP].payload), 'UDP'
             if DNS in packet:
                 protocol = 'DNS'
-                if packet[DNS].qr == 0 and packet[DNS].qd: qname = packet[DNS].qd.qname.decode().rstrip('.')
-                elif packet[DNS].qr == 1 and packet[DNS].an: qname = packet[DNS].qd.qname.decode().rstrip('.')
+                if packet[DNS].qr == 0 and packet[DNS].qd: qname = html.escape(packet[DNS].qd.qname.decode('utf-8', errors='replace').rstrip('.'))
+                elif packet[DNS].qr == 1 and packet[DNS].an: qname = html.escape(packet[DNS].qd.qname.decode('utf-8', errors='replace').rstrip('.'))
         elif ICMP in packet:
             protocol = 'ICMP'
 

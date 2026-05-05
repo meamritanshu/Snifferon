@@ -1,0 +1,18 @@
+Werkzeug appears to be used in a production deployment. Consider switching to a production web server instead.
+[INFO] Auto-detected interface: eth0 (IP: 192.168.0.2)
+--------------------------------------------------
+Starting Scapy sniffer on interface 'eth0'...
+Applying filter: None (capturing all traffic)
+NOTE: You will likely need to run this with 'sudo' for it to work.
+--------------------------------------------------
+
+[ERROR] Scapy could not access the interface 'eth0'.
+Please ensure it is correct and that you are running the script with root privileges (e.g., 'sudo python3 app.py').
+Details: [Errno 1] Operation not permitted
+Starting Flask-SocketIO server on http://127.0.0.1:5001
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [05/May/2026 12:10:03] "GET / HTTP/1.1" 200 -
