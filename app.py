@@ -40,7 +40,8 @@ def get_active_interface():
                 if get_if_addr(iface) == local_ip:
                     print(f"[INFO] Auto-detected interface: {iface} (IP: {local_ip})")
                     return iface
-            except Exception:
+            except Exception as e:
+                print(f"[WARN] Error detecting interface on {iface}: {e}")
                 continue
     except Exception as e:
         print(f"[WARN] Could not auto-detect interface: {e}")
@@ -353,7 +354,7 @@ def packet_callback(packet):
         socketio.emit('network_data', data)
 
     except Exception as e:
-        pass
+        print(f"[ERROR] Error processing packet: {e}")
 
 def run_sniffer(stop_event):
     """
