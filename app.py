@@ -22,9 +22,12 @@ app = Flask(__name__)
 # Disable caching for development
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-socketio = SocketIO(app, async_mode='threading', cors_allowed_origins=["http://localhost:5001", "http://127.0.0.1:5001"])
 
 # --- Configuration ---
+DEFAULT_PORT = 5001
+
+socketio = SocketIO(app, async_mode='threading', cors_allowed_origins=[f"http://localhost:{DEFAULT_PORT}", f"http://127.0.0.1:{DEFAULT_PORT}"])
+
 def get_active_interface():
     """Auto-detects the active network interface by matching the machine's outbound IP."""
     import socket
@@ -395,8 +398,8 @@ if __name__ == '__main__':
     socketio.start_background_task(update_temporal_insights)
     socketio.start_background_task(periodic_clustering_trainer)
     socketio.start_background_task(periodic_classification_updater)
-    print("Starting Flask-SocketIO server on http://127.0.0.1:5001")
-    socketio.run(app, host='127.0.0.1', port=5001, allow_unsafe_werkzeug=True)
+    print(f"Starting Flask-SocketIO server on http://127.0.0.1:{DEFAULT_PORT}")
+    socketio.run(app, host='127.0.0.1', port=DEFAULT_PORT, allow_unsafe_werkzeug=True)
     print("\nServer shutting down. Stopping sniffer...")
     stop_sniffing.set()
     sniffer_thread.join()
