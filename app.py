@@ -17,12 +17,19 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.cluster import KMeans
 import numpy as np
 
+# --- Constants ---
+DEFAULT_PORT = 5001
+ALLOWED_ORIGINS = [
+    f"http://localhost:{DEFAULT_PORT}",
+    f"http://127.0.0.1:{DEFAULT_PORT}"
+]
+
 # Initialize the Flask app and SocketIO
 app = Flask(__name__)
 # Disable caching for development
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-socketio = SocketIO(app, async_mode='threading', cors_allowed_origins=["http://localhost:5001", "http://127.0.0.1:5001"])
+socketio = SocketIO(app, async_mode='threading', cors_allowed_origins=ALLOWED_ORIGINS)
 
 # --- Configuration ---
 def get_active_interface():
@@ -395,8 +402,8 @@ if __name__ == '__main__':
     socketio.start_background_task(update_temporal_insights)
     socketio.start_background_task(periodic_clustering_trainer)
     socketio.start_background_task(periodic_classification_updater)
-    print("Starting Flask-SocketIO server on http://127.0.0.1:5001")
-    socketio.run(app, host='127.0.0.1', port=5001, allow_unsafe_werkzeug=True)
+    print(f"Starting Flask-SocketIO server on http://127.0.0.1:{DEFAULT_PORT}")
+    socketio.run(app, host='127.0.0.1', port=DEFAULT_PORT, allow_unsafe_werkzeug=True)
     print("\nServer shutting down. Stopping sniffer...")
     stop_sniffing.set()
     sniffer_thread.join()
