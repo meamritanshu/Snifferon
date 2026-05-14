@@ -8,7 +8,7 @@ content = content.replace("cors_allowed_origins=\"*\"", "cors_allowed_origins=[\
 
 # Add html import if not there
 if 'import html' not in content:
-    content = content.replace("import sys\n", "import sys\nimport html\n")
+    content = content.replace("from flask import", "import html\nfrom flask import")
 
 # Sanitize qname
 # Find: if packet[DNS].qr == 0 and packet[DNS].qd: qname = packet[DNS].qd.qname.decode().rstrip('.')
