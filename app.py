@@ -208,7 +208,7 @@ def periodic_clustering_trainer():
         print("\n[ML] Triggering periodic clustering model update...")
         socketio.start_background_task(train_clustering_model)
 
-def classify_traffic(packet_features, src_ip, dst_ip, flow_key):
+def classify_traffic(packet_features, flow_key):
     """
     Heuristically classifies traffic based on packet features and flow context.
     Returns (traffic_class, class_confidence).
@@ -332,7 +332,7 @@ def packet_callback(packet):
         if clustering_model: traffic_pattern = flow_to_cluster.get(flow_key, "Learning...")
 
         # Heuristic Traffic Classification
-        traffic_class, class_confidence = classify_traffic(packet_features, src_ip, dst_ip, flow_key)
+        traffic_class, class_confidence = classify_traffic(packet_features, flow_key)
         
         if traffic_class:
             classification_counts[traffic_class] += 1
