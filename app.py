@@ -213,10 +213,15 @@ def classify_traffic(packet_features, src_ip, dst_ip, flow_key):
     Heuristically classifies traffic based on packet features and flow context.
     Returns (traffic_class, class_confidence).
     """
-    protocol = packet_features['protocol']
-    sport = packet_features['sport']
-    dport = packet_features['dport']
-    payload_size = packet_features['payload_size']
+    # Safe extraction with defaults to avoid KeyErrors on malformed features
+    protocol = packet_features.get('protocol', 'Unknown')
+    sport = packet_features.get('sport', 0)
+    dport = packet_features.get('dport', 0)
+    payload_size = packet_features.get('payload_size', 0)
+
+    # Ensure payload_size is non-negative for classification logic
+    if not isinstance(payload_size, (int, float)) or payload_size < 0:
+        payload_size = 0
 
     traffic_class = "Normal"
     class_confidence = 0.7 # Default confidence
@@ -233,8 +238,8 @@ def classify_traffic(packet_features, src_ip, dst_ip, flow_key):
     elif (protocol == 'UDP' and dport in [1935, 5000, 8000]) or (protocol == 'TCP' and dport in [1935, 5000, 8000] and payload_size > 1000):
         traffic_class = "Streaming"
         class_confidence = 0.8
-    # Rule 4: Potential Port Scan (many unique destination ports from one source)
-    elif flow_key in flow_data and flow_data[flow_key]['unique_dest_ips'] > 5 and flow_data[flow_key]['packets'] < 100:
+    # Rule 4: Potential Port Scan (many unique destination ports in a flow)
+    elif flow_key in flow_data and len(flow_data[flow_key].get('ports', set())) > 5 and flow_data[flow_key].get('packets', 0) < 100:
         traffic_class = "Port Scan"
         class_confidence = 0.95
     # Rule 5: Large File Transfer (high payload size over sustained period - simplified)
