@@ -177,7 +177,7 @@ def periodic_classification_updater():
     Periodically calculates and emits the traffic classification distribution.
     """
     while True:
-        time.sleep(10)
+        socketio.sleep(10)
         if not classification_counts:
             continue
 
@@ -204,7 +204,7 @@ def periodic_clustering_trainer():
     Periodically retrains the clustering model every 30 seconds.
     """
     while True:
-        time.sleep(30)
+        socketio.sleep(30)
         print("\n[ML] Triggering periodic clustering model update...")
         socketio.start_background_task(train_clustering_model)
 
@@ -270,7 +270,7 @@ def update_temporal_insights():
             'baseline_rate': round(baseline_rate, 2),
             'trend': trend
         })
-        time.sleep(5)
+        socketio.sleep(5)
 
 def packet_callback(packet):
     global anomaly_model, anomaly_packet_buffer, flow_data, clustering_model, packet_timestamps, packet_count_since_last_log
