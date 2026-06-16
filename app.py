@@ -347,7 +347,19 @@ def packet_callback(packet):
             packet_count_since_last_log = 0
             classification_counts.clear()
 
-        data = { 'timestamp': timestamp, 'source': src_ip, 'target': dst_ip, 'protocol': protocol, 'sport': sport, 'dport': dport, 'payload_size': payload_size, 'is_anomaly': is_anomaly, 'traffic_pattern': traffic_pattern, 'traffic_class': traffic_class, 'class_confidence': round(class_confidence * 100) }
+        data = {
+            'timestamp': timestamp,
+            'source': src_ip,
+            'target': dst_ip,
+            'protocol': protocol,
+            'sport': sport,
+            'dport': dport,
+            'payload_size': payload_size,
+            'is_anomaly': is_anomaly,
+            'traffic_pattern': traffic_pattern,
+            'traffic_class': traffic_class,
+            'class_confidence': round(class_confidence * 100)
+        }
         if qname: data['domain'] = qname
 
         socketio.emit('network_data', data)
